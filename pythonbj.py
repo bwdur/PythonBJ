@@ -1,43 +1,34 @@
+import collections
 from random import randint
+
+Card = collections.namedtuple('Card',['rank','suit'])
 
 class Player:
     def __init__(self, name, bankroll=100):
         self.bankroll = bankroll
         self.name = name
 
-class Card:
-    def __init__(self, suit, rank, deckorder=0):
-        self.suit = suit
-        self.rank = rank
-        self.deckorder = deckorder
-
 class Deck:
+    ranks = [str(n) for n in range(2,11)] + list('JQKA')
+    suits = 'spades diamonds clubs hearts'.split()
+
     def __init__(self):
-        self.suits = ["Spades", "Clubs", "Hearts", "Diamonds"]
-        self.ranks = list(range(1, 14))
-        self.deck = []
+        self._cards = [Card(rank,suit) for suit in self.suits for rank in self.ranks]
 
-        card_num = 1
-        for s_index, suit in enumerate(self.suits, start=1):
-            for r_index, rank in enumerate(self.ranks, start=1):
-                self.deck.append(Card(suit, rank, card_num))
-                card_num += 1
-    
-    def __str__(self):
-        str = ''
-        for card in self.deck:
-            str += "%s -- %s : %s\n" % (card.deckorder, card.suit, card.rank)
-        return str
+    def __len__(self):
+        return len(self._cards)
 
-    def shuffle(self):
-        lst = list(range(1,53))
-        for card in self.deck:
-            random_order = randint(0, len(lst)-1)
-            card.deckorder = lst[random_order]
-            lst.remove(lst[random_order])
+    def __getitem__(self, position):
+        return self._cards[position]
 
-    def getTopCard(self):
-        pass
+    def __setitem__(self, position, card):
+        self._cards[position] = card
+
+    def __repr__(self):
+        outstr = ''
+        for card in self:
+            outstr += str(card) + '\n'
+        return outstr
 
 def main():
     player = Player("Brent", 1000)
@@ -45,12 +36,6 @@ def main():
     deck = Deck()
 
     print(deck)
-
-    deck.shuffle()
-
-    print(deck)
-
-    
 
 if __name__ == '__main__':
     main()
