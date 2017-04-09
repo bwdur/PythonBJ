@@ -1,19 +1,80 @@
 import collections
-from random import randint
+from time import sleep
+from random import shuffle
 
-Card = collections.namedtuple('Card',['rank','suit'])
+# TODO Make ace be 11 or 1 considering
+# TODO Add input checks to bets
+# TODO Only print one of the dealer's cards before player has a turn
+# TODO Add logic for double and split
+# TODO Make dealer's hit cards print one at a time, slowly, for dramatic effect
+
+Card = collections.namedtuple('Card', ['rank', 'suit'])
+CARD_VALS = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
+             '7': 7, '8': 8, '9': 9, '10': 10, 'J': 10,
+             'Q': 10, 'K': 10, 'A': 11}
 
 class Player:
-    def __init__(self, name, bankroll=100):
-        self.bankroll = bankroll
-        self.name = name
+    """ A class representing a player of blackjack.
+        If no name or bankroll are set, __init__ retrieves
+        from the console. """
+    cards = []
+    hand_value = 0
+    bet_amount = 0
+
+    def __init__(self, name='', bankroll=-1, is_dealer=False):
+        if name != '':
+            self.name = name
+        else:
+            self.name = self.input_name()
+        if bankroll > 0:
+            self.bankroll = bankroll
+        else:
+            self.bankroll = self.input_bankroll(self.name)
+    
+    def win_hand(self):
+        self.bankroll += self.bet_amount * 2
+    
+    def input_bet_amount(self):
+        print("CURRENT BANKROLL: $%s" % self.bankroll)
+        self.bet_amount = int(input("Enter your bet amount: "))
+        self.bankroll -= self.bet_amount
+
+    def input_name(self):
+        """ Gets the player's name from the console. """
+        return input("Hello! What is your name? ")
+
+    def input_bankroll(self, name=''):
+        """ Gets the player's bankroll from the console. """
+        return input("What is your starting bankroll, %s? " % name)
+
+    def get_hand_value(self):
+        hand_value = 0
+        for card in self.cards:
+            hand_value += CARD_VALS[card.rank]
+        return hand_value
+
+    def print_cards(self):
+        print("-------- %s -----------\n" % self.name.upper())
+        for card in self.cards:
+            print(card)
+
+    def hit(self, deck):
+        """ Add a card to player cards """
+        self.cards.append(deck.pop())
+        self.hand_value = self.get_hand_value()
+
+    def print_hand_value(self):
+        print("\n============%s==============\n" % self.hand_value)
+
 
 class Deck:
-    ranks = [str(n) for n in range(2,11)] + list('JQKA')
+    """ A class that represents a deck of cards.
+    Implements getitem, setitem, len, repr"""
+    ranks = [str(n) for n in range(2, 11)] + list('JQKA')
     suits = 'spades diamonds clubs hearts'.split()
 
     def __init__(self):
-        self._cards = [Card(rank,suit) for suit in self.suits for rank in self.ranks]
+        self._cards = [Card(rank, suit) for suit in self.suits for rank in self.ranks]
 
     def __len__(self):
         return len(self._cards)
@@ -30,12 +91,83 @@ class Deck:
             outstr += str(card) + '\n'
         return outstr
 
-def main():
-    player = Player("Brent", 1000)
-    print(player.bankroll)
-    deck = Deck()
+    def pop(self):
+        """ Pops off the top card in the deck """
+        return self._cards.pop()
 
-    print(deck)
+def print_welcome():
+    print("Welcome to blackjack!")
+
+def get_start_cards(deck):
+    """ Returns a list of two cards """
+    return [deck.pop(), deck.pop()]
+
+def play_hand(player_cards, dealer_cards):
+    """ Play a hand of blackjack until player busts or stays """
+    pass
+
+def print_cards(p1,p2):
+    p1.print_cards()
+    p1.print_hand_value()
+    p2.print_cards()
+    p2.print_hand_value()
+
+def main():
+    """ MAIN """
+    print_welcome()
+    # player = Player() # Uncomment to get input from console
+    player = Player(name='Brent', bankroll=1000)
+    dealer = Player(name='Dealer', bankroll=1, is_dealer=True)
+    deck = Deck()
+    shuffle(deck)
+
+    while player.bankroll > 0:
+        print("\nHere we go, %s!\n" % player.name)
+        player.input_bet_amount()
+        dealer.cards = get_start_cards(deck)
+        dealer.hand_value = dealer.get_hand_value()
+        player.cards = get_start_cards(deck)
+        player.hand_value = player.get_hand_value()
+
+        print_cards(dealer, player)
+        answer = 'h'
+
+        while answer == 'h' and player.hand_value <= 21:
+            print("Your current hand value: %s" % player.hand_value)
+            answer = input('Enter h for hit or s for stand: ')
+            print("\n")
+            if answer == 'h':
+                player.hit(deck)
+                print_cards(dealer, player)
+            else:
+                pass
+
+        if player.hand_value > 21:
+            print("Too bad, you lose. Sorry!")
+        else:
+            # IMPLEMENT DEALER HITS AND STANDS
+            print("It's the dealer's turn.")
+            print("You have %s." % player.hand_value)
+            print("Dealer has %s." % dealer.hand_value)
+            print("Good luck! Dealer's turn...")
+            dealer.print_cards()
+
+            while dealer.hand_value < 17:
+                sleep(2)
+                dealer.hit(deck)
+                print(dealer.cards[-1])
+
+            sleep(1)
+            dealer.print_hand_value()
+            sleep(2)
+
+            if dealer.hand_value > 21 or player.hand_value > dealer.hand_value:
+                print("You win!")
+                player.win_hand()
+            elif dealer.hand_value > player.hand_value:
+                print("You lose :(")
+            else:
+                print("Tie!")
 
 if __name__ == '__main__':
     main()
